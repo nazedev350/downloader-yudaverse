@@ -325,5 +325,45 @@ tryAutoplay();
   applyPlatform();
 })();
 
+/* ══ MUSIC FLOAT BUTTON ══ */
+function toggleMusicFloat(){
+  const audio=$('bgAudio');
+  const playIcon=$('musicFloatPlay');
+  const pauseIcon=$('musicFloatPause');
+  const btn=$('musicFloat');
+  if(audio.paused){
+    audio.play().then(()=>{
+      playIcon.style.display='none';
+      pauseIcon.style.display='block';
+      btn.classList.add('playing');
+      if(typeof mpPlayBtn!=='undefined') mpPlayBtn.classList.add('playing');
+    }).catch(()=>{});
+  } else {
+    audio.pause();
+    playIcon.style.display='block';
+    pauseIcon.style.display='none';
+    btn.classList.remove('playing');
+    if(typeof mpPlayBtn!=='undefined') mpPlayBtn.classList.remove('playing');
+  }
+}
+
+// Sync float icon when audio plays/pauses from other controls
+document.addEventListener('DOMContentLoaded',()=>{
+  const audio=$('bgAudio');
+  if(!audio) return;
+  audio.addEventListener('play',()=>{
+    const p=$('musicFloatPlay'),pa=$('musicFloatPause'),b=$('musicFloat');
+    if(p){p.style.display='none';}
+    if(pa){pa.style.display='block';}
+    if(b){b.classList.add('playing');}
+  });
+  audio.addEventListener('pause',()=>{
+    const p=$('musicFloatPlay'),pa=$('musicFloatPause'),b=$('musicFloat');
+    if(p){p.style.display='block';}
+    if(pa){pa.style.display='none';}
+    if(b){b.classList.remove('playing');}
+  });
+});
+
 /* ══ END ══ */
 

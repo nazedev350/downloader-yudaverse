@@ -188,8 +188,10 @@ body{
 .mp-info{flex:1;min-width:0}
 .mp-sub{font-size:.65rem;color:var(--muted);margin-top:2px}
 
-#waFloat{position:fixed;bottom:74px;right:16px;z-index:5001;width:50px;height:50px;background:#25d366;border:var(--ink-border-heavy);display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 var(--ink),0 4px 20px rgba(37,211,102,.4);cursor:pointer;animation:pulse 2.5s ease-in-out infinite;text-decoration:none;border-radius:8px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
-#waFloat svg{width:26px;height:26px;fill:#fff}
+#musicFloat{position:fixed;bottom:74px;right:16px;z-index:5001;width:50px;height:50px;background:linear-gradient(135deg,#ff3860,#ff8c00);border:var(--ink-border-heavy);display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 var(--ink),0 4px 20px rgba(255,56,96,.4);cursor:pointer;animation:pulse 2.5s ease-in-out infinite;border-radius:8px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));transition:transform .15s ease}
+#musicFloat:active{transform:scale(.93)}
+#musicFloat.playing{animation:none;box-shadow:4px 4px 0 var(--ink),0 4px 24px rgba(255,140,0,.6)}
+#musicFloat svg{width:22px;height:22px;fill:#fff}
 
 .app-footer{margin-top:auto;padding-top:24px;text-align:center;font-size:.68rem;color:var(--muted);border-top:var(--ink-border);font-family:var(--font-head);letter-spacing:.05em}
 
