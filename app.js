@@ -264,7 +264,7 @@ function renderResult(data){
   data.links.forEach(l=>le.appendChild(makeDownloadBtn(l)));
 }
 
-const bgAudio=$('bgAudio'),mpPlayBtn=$('mpPlayBtn'),musicPlayer=$('musicPlayer');
+const bgAudio=$('bgAudio');
 
 // Randomize song on every page load
 const songList=[
@@ -275,18 +275,10 @@ const songList=[
 ];
 bgAudio.src = songList[Math.floor(Math.random()*songList.length)];
 
-musicPlayer.style.display='flex';
-mpPlayBtn.addEventListener('click',()=>{
-  if(bgAudio.paused){bgAudio.play();mpPlayBtn.classList.add('playing');}
-  else{bgAudio.pause();mpPlayBtn.classList.remove('playing');}
-});
-
 function tryAutoplay(){
-  bgAudio.play().then(()=>{
-    mpPlayBtn.classList.add('playing');
-  }).catch(()=>{
+  bgAudio.play().catch(()=>{
     const unlockAudio=()=>{
-      bgAudio.play().then(()=>{mpPlayBtn.classList.add('playing');}).catch(()=>{});
+      bgAudio.play().catch(()=>{});
       document.removeEventListener('click',unlockAudio);
       document.removeEventListener('touchstart',unlockAudio);
     };
