@@ -269,9 +269,12 @@ const bgAudio=$('bgAudio');
 // Randomize song on every page load
 const songList=[
   'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777293349/r8ipqyqh8trdmsm57ax6.mp3',
-  'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777293354/yjqy3yuchadn7dzprkbh.mp3',
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/zk6uniu8.mp3',
   'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777293360/sb2rq041xwimimyfmjwa.mp3',
-  'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777291623/tkocmr3mhoaesbzm4gqy.mp3'
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/trorp8il.mp3',
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/ito4m9wq.mp3',
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/etyvlxnk.mp3',
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/vph1npic.mp3'
 ];
 bgAudio.src = songList[Math.floor(Math.random()*songList.length)];
 
