@@ -1,7 +1,7 @@
 'use strict';
 
 /* ══ SPOTIFY SEARCH ════════════════════════════════════════════════════════ */
-const SPOTIFY_TOKEN = 'BQBg6lLcaj_g_JExUbaTPuTYhGoLfEdqwtEir3sLQaiLmlAlKoS39hjZmbwbCaUzV2HOO5s_KaAqf86a-o5ikXZMe2x_cng7C5_A7zHvgzF_ZZVPfrzAmAAC9kfNbcTaawhmfAf_ugNydAKTbeXxj2vCMVE2FyiF4kofNy9EJY_UiD4a8RY7QE79iOvPcnWC2SWJBAwLs0JZOuEmwlmiqWf8A_2YMWh6MmCttrOeMyBbM8pcxOzW6EhTpRhfwip5tqrX0dUYW0n9J_X3Ib8h6Smr0IT84tMeS-xcJz5oZVd62eHkCcsuRvtglDkNMhNBALyU4g';
+const SPOTIFY_TOKEN = 'BQCd2OvyBdugYqy0zk6VsF11aCwmti7ECcQs3_5XLk6frdnTOSJvZs4CVicI6LZxmiG9MOBWOk7n-Gyb4drd97VDWhZb2LE7EknQof8wIWZ9s3Ba2bZCc25676oUpRMA8e9rgR8x5bDOiyW9F6ld_jWYTrxmht3cDo0GPiilgxkH2ijBtYy7ssTal3_yn9oQw7ElQpbaf_2K9I5Syr5xBiJhmpqRbv_VwmNgdX8wvKwqLMPmRhA1oB8zA3USd6qGbGwyXMB5NkdteFzyegySQhqVE2v2yU9NYIxiQigyyp9njcG5AHCzJ7MyD6FsvV5G8qp3HA';
 
 async function spotifySearch(query) {
   const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=15`, {
