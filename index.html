@@ -141,6 +141,49 @@
       <div class="ap-desc" id="apDesc">Contoh: facebook.com/share/r/...</div>
     </div>
   </div>
+  <!-- SPOTIFY TAB SWITCHER (only shown for spotify) -->
+  <div id="spotifyTabs" class="sp-tabs hidden">
+    <button class="sp-tab active" id="spTabSearch" onclick="switchSpTab('search')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Cari Lagu
+    </button>
+    <button class="sp-tab" id="spTabUrl" onclick="switchSpTab('url')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      Paste URL
+    </button>
+  </div>
+
+  <!-- SPOTIFY SEARCH PANEL -->
+  <div id="spotifySearchPanel" class="hidden">
+    <div class="sp-search-wrap">
+      <div class="input-wrap">
+        <span class="i-pfx" style="color:#1db954">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input type="text" id="spSearchInput" placeholder="Cari judul lagu, artis..." autocomplete="off" spellcheck="false"/>
+        <button id="spSearchClearBtn" class="clear-btn" title="Hapus">&#x2715;</button>
+      </div>
+      <button id="spSearchBtn" class="go-btn" style="background:linear-gradient(135deg,#0d7a3a,#1db954,#1ed760);background-size:200% 200%">
+        <span>CARI LAGU</span>
+        <span class="go-arr" style="animation:none">🎵</span>
+      </button>
+    </div>
+    <div id="spSearchZone" style="display:none">
+      <div id="spSearchLoad" class="z-load" style="display:none">
+        <svg class="z-spinner" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="20" fill="none" stroke="#1db954" stroke-width="4" stroke-linecap="round" stroke-dasharray="100" stroke-dashoffset="60"/>
+        </svg>
+        <p style="color:#1db954">Mencari lagu...</p>
+      </div>
+      <div id="spSearchErr" class="z-err" style="display:none">
+        <span class="z-err-ico">🎵</span>
+        <p id="spSearchErrMsg"></p>
+        <button onclick="resetSpSearch()">Coba Lagi</button>
+      </div>
+      <div id="spSearchResults" class="sp-results" style="display:none"></div>
+    </div>
+  </div>
+
   <div class="input-area" id="urlInputArea">
     <div class="input-wrap">
       <span class="i-pfx">

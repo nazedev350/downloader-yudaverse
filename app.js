@@ -1,6 +1,110 @@
 'use strict';
 
-/* ══ PLATFORM CONFIG ═══════════════════════════════════════════════════════ */
+/* ══ SPOTIFY SEARCH ════════════════════════════════════════════════════════ */
+const SPOTIFY_TOKEN = 'BQBg6lLcaj_g_JExUbaTPuTYhGoLfEdqwtEir3sLQaiLmlAlKoS39hjZmbwbCaUzV2HOO5s_KaAqf86a-o5ikXZMe2x_cng7C5_A7zHvgzF_ZZVPfrzAmAAC9kfNbcTaawhmfAf_ugNydAKTbeXxj2vCMVE2FyiF4kofNy9EJY_UiD4a8RY7QE79iOvPcnWC2SWJBAwLs0JZOuEmwlmiqWf8A_2YMWh6MmCttrOeMyBbM8pcxOzW6EhTpRhfwip5tqrX0dUYW0n9J_X3Ib8h6Smr0IT84tMeS-xcJz5oZVd62eHkCcsuRvtglDkNMhNBALyU4g';
+
+async function spotifySearch(query) {
+  const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=15`, {
+    headers: { Authorization: `Bearer ${SPOTIFY_TOKEN}` }
+  });
+  if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+  return res.json();
+}
+
+function fmtMs(ms) {
+  const s = Math.floor(ms / 1000), m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
+let spCurrentTab = 'search';
+function switchSpTab(tab) {
+  spCurrentTab = tab;
+  const panelSearch = $('spotifySearchPanel');
+  const panelUrl = $('urlInputArea');
+  const tabSearch = $('spTabSearch');
+  const tabUrl = $('spTabUrl');
+  if (tab === 'search') {
+    panelSearch.classList.remove('hidden');
+    panelUrl.style.display = 'none';
+    tabSearch.classList.add('active');
+    tabUrl.classList.remove('active');
+  } else {
+    panelSearch.classList.add('hidden');
+    panelUrl.style.display = '';
+    tabSearch.classList.remove('active');
+    tabUrl.classList.add('active');
+  }
+}
+window.switchSpTab = switchSpTab;
+
+function resetSpSearch() {
+  $('spSearchZone').style.display = 'none';
+  $('spSearchLoad').style.display = 'none';
+  $('spSearchErr').style.display = 'none';
+  $('spSearchResults').style.display = 'none';
+}
+window.resetSpSearch = resetSpSearch;
+
+async function doSpotifySearch() {
+  const q = $('spSearchInput').value.trim();
+  if (!q) { $('spSearchInput').classList.add('shake'); setTimeout(() => $('spSearchInput').classList.remove('shake'), 400); return; }
+  const zone2 = $('spSearchZone'), load = $('spSearchLoad'), err = $('spSearchErr'), results = $('spSearchResults');
+  zone2.style.display = 'block'; load.style.display = 'flex'; err.style.display = 'none'; results.style.display = 'none';
+  setTimeout(() => zone2.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  try {
+    const data = await spotifySearch(q);
+    const tracks = data?.tracks?.items || [];
+    load.style.display = 'none';
+    if (!tracks.length) { err.style.display = 'flex'; $('spSearchErrMsg').textContent = 'Lagu tidak ditemukan. Coba kata kunci lain.'; return; }
+    results.style.display = 'flex';
+    results.innerHTML = `<div class="sp-result-count">✦ ${tracks.length} hasil ditemukan untuk "${q}"</div>`;
+    tracks.forEach((track, idx) => {
+      const img = track.album?.images?.[1]?.url || track.album?.images?.[0]?.url || null;
+      const artists = track.artists?.map(a => a.name).join(', ') || '—';
+      const name = track.name || 'Unknown';
+      const duration = track.duration_ms ? fmtMs(track.duration_ms) : '';
+      const spotifyUrl = track.external_urls?.spotify || '';
+      const card = document.createElement('div');
+      card.className = 'sp-track';
+      card.style.animationDelay = `${idx * 0.04}s`;
+      card.innerHTML = `
+        ${img ? `<img class="sp-track-img" src="${img}" alt="${name}" loading="lazy"/>` : `<div class="sp-track-img-ph">🎵</div>`}
+        <div class="sp-track-info">
+          <div class="sp-track-name">${name}</div>
+          <div class="sp-track-artist">${artists}</div>
+          <div class="sp-track-duration">${duration ? `⏱ ${duration}` : ''}</div>
+        </div>
+        <button class="sp-track-dl" title="Download lagu ini">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          DL
+        </button>`;
+      const dlBtn = card.querySelector('.sp-track-dl');
+      dlBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!spotifyUrl) { alert('URL Spotify tidak ditemukan.'); return; }
+        dlBtn.disabled = true;
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#1db954" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ...`;
+        showLoading();
+        try {
+          const result = await PLATFORMS['spotify'].fetch(spotifyUrl);
+          renderResult(result);
+          zone2.style.display = 'none';
+        } catch (err2) {
+          showError(err2.message || 'Gagal download lagu.');
+        }
+        dlBtn.disabled = false;
+        dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> DL`;
+      });
+      results.appendChild(card);
+    });
+  } catch (e) {
+    load.style.display = 'none';
+    err.style.display = 'flex';
+    $('spSearchErrMsg').textContent = e.message || 'Gagal mencari lagu. Token mungkin expired.';
+  }
+}
+
+
 const PLATFORM_ICONS = {
   facebook : `<svg viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>`,
   tiktok   : `<svg viewBox="0 0 24 24" fill="#fff" style="background:#010101;border-radius:6px"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.77 1.52V6.73a4.85 4.85 0 01-1-.04z"/></svg>`,
@@ -49,12 +153,37 @@ function applyPlatform(){
   $('goBtnLbl').textContent='Download';
   const ic=$('apIcon');ic.innerHTML=PLATFORM_ICONS[active]||'';
   const s=ic.querySelector('svg');if(s){s.style.width='100%';s.style.height='100%';}
+  // Show/hide Spotify tab switcher
+  const tabs=$('spotifyTabs');
+  const spPanel=$('spotifySearchPanel');
+  const urlArea=$('urlInputArea');
+  if(active==='spotify'){
+    tabs.classList.remove('hidden');
+    switchSpTab(spCurrentTab||'search');
+  } else {
+    tabs.classList.add('hidden');
+    spPanel.classList.add('hidden');
+    urlArea.style.display='';
+  }
 }
 
 urlInput.addEventListener('input',()=>clearBtn.classList.toggle('show',urlInput.value.length>0));
 urlInput.addEventListener('keydown',e=>{if(e.key==='Enter')go();});
 clearBtn.addEventListener('click',()=>{urlInput.value='';clearBtn.classList.remove('show');resetUI();urlInput.focus();});
 goBtn.addEventListener('click',go);
+
+// Spotify search wiring
+document.addEventListener('DOMContentLoaded',()=>{
+  const spBtn=$('spSearchBtn');
+  const spInp=$('spSearchInput');
+  const spClr=$('spSearchClearBtn');
+  if(spBtn) spBtn.addEventListener('click', doSpotifySearch);
+  if(spInp){
+    spInp.addEventListener('keydown',e=>{if(e.key==='Enter') doSpotifySearch();});
+    spInp.addEventListener('input',()=>{ if(spClr) spClr.classList.toggle('show',spInp.value.length>0); });
+  }
+  if(spClr) spClr.addEventListener('click',()=>{spInp.value='';spClr.classList.remove('show');resetSpSearch();spInp.focus();});
+});
 
 function openPicker(){
   const app=$('app'),pp=$('platformPicker');
