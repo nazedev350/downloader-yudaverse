@@ -233,41 +233,85 @@ async function fetchTikTok(url){
     apiFetch(`https://api.siputzx.my.id/api/d/tiktok/v2?url=${encodeURIComponent(url)}`),
     apiFetch(`https://api.siputzx.my.id/api/d/tiktok/v3?url=${encodeURIComponent(url)}`),
   ]);
-  if(r1.status==='rejected'||!r1.value?.status||!r1.value?.data)throw new Error('Gagal mengambil data TikTok. Pastikan URL valid.');
-  const d=r1.value.data;
-  const musicUrl=(r2.status==='fulfilled'&&r2.value?.data?.music_link)?r2.value.data.music_link:null;
-  const thumb=(r2.status==='fulfilled'&&r2.value?.data?.cover_link)?r2.value.data.cover_link:d.thumbnail||null;
-  if(d.type==='slide'){
+
+  // Prioritize v2 API data
+  const v2ok = r2.status==='fulfilled' && r2.value?.status && r2.value?.data;
+  const v2 = v2ok ? r2.value.data : null;
+  const v1ok = r1.status==='fulfilled' && r1.value?.status && r1.value?.data;
+  const d = v1ok ? r1.value.data : null;
+
+  if(!v2ok && !v1ok) throw new Error('Gagal mengambil data TikTok. Pastikan URL valid.');
+
+  // Extract fields prioritizing v2
+  const musicUrl = v2?.music_link || null;
+  const thumb = v2?.cover_link || d?.thumbnail || null;
+  const author = v2?.author_nickname || d?.author || '—';
+  const title = v2?.text || d?.title || 'TikTok Video';
+  const duration = v2?.duration ? Math.round(Number(v2.duration)/1000)+'s' : null;
+  const likeCount = v2?.like_count || null;
+  const playCount = v2?.play_count || null;
+
+  // Build meta chips
+  const meta = [
+    {icon:'👤', text: author},
+    duration ? {icon:'⏱', text: duration} : null,
+    playCount ? {icon:'▶️', text: playCount+' plays'} : null,
+    likeCount ? {icon:'❤️', text: likeCount+' likes'} : null,
+    {icon:'🎬', text:'TikTok'},
+  ].filter(Boolean);
+
+  // Handle slide type
+  const isSlide = (d?.type==='slide') || (v2?.type===2);
+  if(isSlide){
     const v3=(r3.status==='fulfilled'&&r3.value?.status)?r3.value:null;
     const v3Data=v3?.data||v3?.result||null;
     const v3Cover=v3Data?.cover||v3Data?.thumbnail||thumb;
     const v3Music=v3Data?.music||v3Data?.music_url||musicUrl;
-    const v3Title=v3Data?.title||d.title||'TikTok Slide';
-    const v3Author=d.author||'—';
+    const v3Title=v3Data?.title||title;
     if(v3Data&&Array.isArray(v3Data.images||v3Data.photos)){
       const photos=(v3Data.images||v3Data.photos).filter(p=>p&&(p.url||typeof p==='string'));
       if(photos.length){
         const links=photos.map((p,i)=>({url:p.url||p,label:`Foto ${i+1}`,sub:'slide · jpeg',isAudio:false,direct:true,thumb:p.url||p}));
         if(v3Music)links.push({url:v3Music,label:'Musik / Audio',sub:'audio · mp3',isAudio:true,direct:true});
-        return{platform:'tiktok',type:'slide',cover:v3Cover,title:v3Title,meta:[{icon:'👤',text:v3Author},{icon:'🖼',text:`${photos.length} foto`}],links};
+        return{platform:'tiktok',type:'slide',cover:v3Cover,title:v3Title,meta,links};
       }
     }
-    const imgs=(d.media||[]).filter(m=>m.type==='image');
+    const imgs=(d?.media||[]).filter(m=>m.type==='image');
     const links=imgs.map((img,i)=>{
       const urlList=img.url_list||img.urlList||[];const safeUrls=urlList.filter(u=>!u.includes('rapidcdn'));
       return{url:safeUrls[0]||urlList[0]||img.url||'',label:`Foto ${i+1}`,sub:'slide · jpeg',isAudio:false,direct:true,thumb:safeUrls[0]||img.url||''};
     });
     if(musicUrl)links.push({url:musicUrl,label:'Musik / Audio',sub:'audio · mp3',isAudio:true,direct:true});
-    return{platform:'tiktok',type:'slide',cover:thumb,title:d.title||'TikTok Slide',meta:[{icon:'👤',text:d.author||'—'},{icon:'🖼',text:`${imgs.length} foto`}],links};
+    return{platform:'tiktok',type:'slide',cover:thumb,title,meta,links};
   }
+
+  // Build video links from v2 API first
   const links=[];
-  (d.media||[]).forEach(m=>{
-    if(m.quality==='HD'||m.type==='video_hd'){if(m.backup)links.push({url:m.backup,label:'HD TikTok',sub:'tanpa watermark · mp4',isAudio:false,direct:true});}
-    else links.push({url:m.url,label:'SD Video',sub:'tanpa watermark · mp4',isAudio:false,direct:true});
-  });
-  if(musicUrl)links.push({url:musicUrl,label:'Musik / Audio',sub:'audio · mp3',isAudio:true,direct:true});
-  if(!links.length)throw new Error('Tidak ada link download tersedia.');
-  return{platform:'tiktok',type:'video',cover:thumb,title:d.title||'TikTok Video',meta:[{icon:'👤',text:d.author||'—'},{icon:'🎬',text:'TikTok'}],links};
+
+  // v2 HD no-watermark
+  if(v2?.no_watermark_link_hd){
+    links.push({url:v2.no_watermark_link_hd, label:'HD Tanpa Watermark', sub:'kualitas terbaik · mp4', isAudio:false, direct:true, previewUrl:v2.no_watermark_link_hd});
+  }
+  // v2 no-watermark
+  if(v2?.no_watermark_link){
+    links.push({url:v2.no_watermark_link, label:'Tanpa Watermark', sub:'tanpa watermark · mp4', isAudio:false, direct:true, previewUrl:v2.no_watermark_link});
+  }
+  // Fallback from v1
+  if(!links.length && d?.media?.length){
+    (d.media||[]).forEach(m=>{
+      if(m.quality==='HD'||m.type==='video_hd'){if(m.backup)links.push({url:m.backup,label:'HD TikTok',sub:'tanpa watermark · mp4',isAudio:false,direct:true,previewUrl:m.backup});}
+      else links.push({url:m.url,label:'SD Video',sub:'tanpa watermark · mp4',isAudio:false,direct:true,previewUrl:m.url});
+    });
+  }
+  // Music
+  if(musicUrl) links.push({url:musicUrl, label:'Musik / Audio', sub:'audio · mp3', isAudio:true, direct:true});
+
+  if(!links.length) throw new Error('Tidak ada link download tersedia.');
+
+  // Use first video link as preview
+  const videoPreviewUrl = links.find(l=>!l.isAudio)?.previewUrl || null;
+
+  return{platform:'tiktok', type:'video', cover:thumb, title, meta, links, videoPreviewUrl};
 }
 
 async function fetchInstagram(url){
@@ -359,11 +403,36 @@ function renderResult(data){
   goBtn.disabled=false;zLoad.style.display='none';zMedia.style.display='block';
   const p=PLATFORMS[data.platform]||PLATFORMS[active];
   const cover=$('mCover'),cw=cover.parentElement;
-  if(data.cover){
+
+  // Remove old video preview if any
+  const oldVid=cw.querySelector('.video-preview');if(oldVid)oldVid.remove();
+
+  // Show video preview for TikTok videos with previewUrl
+  if(data.platform==='tiktok' && data.type==='video' && data.videoPreviewUrl){
+    cover.style.display='none';
+    const oldFb=cw.querySelector('.cover-fallback');if(oldFb)oldFb.remove();
+    const vid=document.createElement('video');
+    vid.className='video-preview';
+    vid.src=data.videoPreviewUrl;
+    vid.controls=true;
+    vid.autoplay=false;
+    vid.loop=false;
+    vid.playsInline=true;
+    vid.poster=data.cover||'';
+    vid.style.cssText='width:100%;max-height:340px;border-radius:12px;background:#000;display:block;object-fit:contain;';
+    // Fallback to cover if video fails
+    vid.addEventListener('error',()=>{
+      vid.remove();
+      if(data.cover){cover.src=data.cover;cover.style.display='block';}
+      else buildFallback(cw,p);
+    });
+    cw.insertBefore(vid,cw.firstChild);
+  } else if(data.cover){
     cover.src=data.cover;cover.style.display='block';
     cover.onerror=()=>{cover.style.display='none';buildFallback(cw,p);};
     const old=cw.querySelector('.cover-fallback');if(old)old.remove();
   }else{cover.style.display='none';buildFallback(cw,p);}
+
   function buildFallback(c,plat){
     if(c.querySelector('.cover-fallback'))return;
     const f=document.createElement('div');f.className='cover-fallback';
