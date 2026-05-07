@@ -359,15 +359,18 @@ function resetUI(){goBtn.disabled=false;zone.style.display='none';zLoad.style.di
 window.resetUI=resetUI;
 
 function getFilename(downloadUrl,isAudio,label){
+  const ext=isAudio?'mp3':label.toLowerCase().includes('foto')?'jpg':'mp4';
+  const safeLabel='yudaverse_'+label.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-]/g,'').toLowerCase()+'.'+ext;
   try{
-    const u=new URL(downloadUrl),base=u.pathname.split('/').filter(Boolean).pop();
-    const clean=base?decodeURIComponent(base).split('?')[0]:'';
-    if(clean.match(/\.([a-zA-Z0-9]{2,5})$/)&&clean.length>4)return clean;
-    const ext=isAudio?'mp3':label.toLowerCase().includes('foto')?'jpg':'mp4';
-    return(clean.replace(/[^a-zA-Z0-9_\-]/g,'')||label.replace(/\s+/g,'_').toLowerCase())+'.'+ext;
+    const u=new URL(downloadUrl);
+    const base=u.pathname.split('/').filter(Boolean).pop()||'';
+    // Skip base64-encoded or very long path segments (tikcdn style)
+    if(base.length>80||/[+/=]{3,}/.test(base)) return safeLabel;
+    const clean=decodeURIComponent(base).split('?')[0];
+    if(clean.match(/\.([a-zA-Z0-9]{2,5})$/)&&clean.length>4&&clean.length<100) return clean;
+    return safeLabel;
   }catch(_){
-    const ext=isAudio?'mp3':label.toLowerCase().includes('foto')?'jpg':'mp4';
-    return`yudaverse_${label.replace(/\s+/g,'_').toLowerCase()}.${ext}`;
+    return safeLabel;
   }
 }
 
@@ -388,10 +391,48 @@ function makeDownloadBtn(link){
     try{
       const filename=getFilename(link.url,link.isAudio,link.label);
       let ok=false;
-      if(!link.url.includes('rapidcdn')){
-        try{const resp=await fetch(link.url,{mode:'cors'});if(resp.ok){const blob=await resp.blob();const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);ok=true;}}catch(_){}
+
+      // Domains known to block CORS fetch
+      const isCorsBlocked=/tikcdn\.io|rapidcdn|akamaized\.net/i.test(link.url);
+
+      // Step 1: Try normal CORS fetch (works for most CDNs)
+      if(!isCorsBlocked){
+        try{
+          const resp=await fetch(link.url,{mode:'cors'});
+          if(resp.ok){
+            const blob=await resp.blob();
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download=filename;
+            document.body.appendChild(a);a.click();
+            setTimeout(()=>{URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);
+            ok=true;
+          }
+        }catch(_){}
       }
-      if(!ok){const a=document.createElement('a');a.href=link.url;a.download=filename;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();document.body.removeChild(a);}
+
+      // Step 2: For audio/music blocked by CORS, try no-cors blob (may return opaque)
+      if(!ok && link.isAudio){
+        try{
+          const resp=await fetch(link.url,{mode:'no-cors'});
+          const blob=await resp.blob();
+          // opaque blob has type '' and size 0 — check size
+          if(blob && blob.size>0){
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download=filename;
+            document.body.appendChild(a);a.click();
+            setTimeout(()=>{URL.revokeObjectURL(a.href);document.body.removeChild(a);},1500);
+            ok=true;
+          }
+        }catch(_){}
+      }
+
+      // Step 3: Fallback - open direct URL in new tab (user saves manually)
+      if(!ok){
+        window.open(link.url,'_blank','noopener,noreferrer');
+      }
+
       arrEl.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
       setTimeout(()=>{arrEl.innerHTML=dlSvg;btn.disabled=false;},2500);
     }catch(e){arrEl.innerHTML=dlSvg;btn.disabled=false;}
