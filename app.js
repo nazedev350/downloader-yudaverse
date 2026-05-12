@@ -503,10 +503,10 @@ function renderResult(data){
   data.links.forEach(l=>le.appendChild(makeDownloadBtn(l)));
 }
 
-const bgAudio=$('bgAudio');
+/* ══ MUSIC PLAYER ══ */
+const bgAudio = $('bgAudio');
 
-// Randomize song on every page load
-const songList=[
+const songList = [
   'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777293349/r8ipqyqh8trdmsm57ax6.mp3',
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/zk6uniu8.mp3',
   'https://res.cloudinary.com/dsogd9ozw/video/upload/v1777293360/sb2rq041xwimimyfmjwa.mp3',
@@ -516,17 +516,99 @@ const songList=[
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/vph1npic.mp3',
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/8piil2dh.mp3'
 ];
-bgAudio.src = songList[Math.floor(Math.random()*songList.length)];
+
+let mpCurrentIdx = Math.floor(Math.random() * songList.length);
+
+const mpBar      = $('musicPlayer');
+const mpPlayBtn  = $('mpPlayBtn');
+const mpPrevBtn  = $('mpPrevBtn');
+const mpNextBtn  = $('mpNextBtn');
+const mpFill     = $('mpFill');
+const mpThumb    = $('mpThumb');
+const mpTrack    = $('mpTrack');
+const mpCurrent  = $('mpCurrent');
+const mpDuration = $('mpDuration');
+
+function mpFmt(s) {
+  if(isNaN(s)||s<0) return '0:00';
+  const m = Math.floor(s/60);
+  return `${m}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+}
+
+function mpLoadSong(idx, autoplay) {
+  mpCurrentIdx = ((idx % songList.length) + songList.length) % songList.length;
+  bgAudio.src = songList[mpCurrentIdx];
+  bgAudio.load();
+  mpFill.style.width = '0%';
+  mpThumb.style.left = '0%';
+  mpCurrent.textContent = '0:00';
+  mpDuration.textContent = '0:00';
+  if(autoplay) bgAudio.play().catch(()=>{});
+}
+
+function mpSetPlaying(playing) {
+  const playIco  = mpPlayBtn.querySelector('.mp-ico-play');
+  const pauseIco = mpPlayBtn.querySelector('.mp-ico-pause');
+  if(playing) {
+    playIco.style.display  = 'none';
+    pauseIco.style.display = 'block';
+    mpBar.classList.add('playing');
+  } else {
+    playIco.style.display  = 'block';
+    pauseIco.style.display = 'none';
+    mpBar.classList.remove('playing');
+  }
+}
+
+mpPlayBtn.addEventListener('click', () => {
+  if(bgAudio.paused) bgAudio.play().catch(()=>{});
+  else bgAudio.pause();
+});
+mpPrevBtn.addEventListener('click', () => mpLoadSong(mpCurrentIdx - 1, !bgAudio.paused));
+mpNextBtn.addEventListener('click', () => mpLoadSong(mpCurrentIdx + 1, !bgAudio.paused));
+
+bgAudio.addEventListener('play',  () => mpSetPlaying(true));
+bgAudio.addEventListener('pause', () => mpSetPlaying(false));
+
+bgAudio.addEventListener('timeupdate', () => {
+  if(!bgAudio.duration) return;
+  const pct = (bgAudio.currentTime / bgAudio.duration) * 100;
+  mpFill.style.width = pct + '%';
+  mpThumb.style.left = pct + '%';
+  mpCurrent.textContent = mpFmt(bgAudio.currentTime);
+});
+
+bgAudio.addEventListener('durationchange', () => {
+  mpDuration.textContent = mpFmt(bgAudio.duration);
+});
+
+bgAudio.addEventListener('ended', () => mpLoadSong(mpCurrentIdx + 1, true));
+
+/* Progress bar scrubbing */
+let mpDragging = false;
+function mpSeekTo(e) {
+  const rect = mpTrack.getBoundingClientRect();
+  const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0;
+  const pct = Math.max(0, Math.min((clientX - rect.left) / rect.width, 1));
+  if(bgAudio.duration) bgAudio.currentTime = pct * bgAudio.duration;
+  mpFill.style.width = (pct*100) + '%';
+  mpThumb.style.left = (pct*100) + '%';
+}
+mpTrack.addEventListener('mousedown',  e => { mpDragging = true; mpSeekTo(e); });
+mpTrack.addEventListener('touchstart', e => { mpDragging = true; mpSeekTo(e); }, { passive: true });
+document.addEventListener('mousemove',  e => { if(mpDragging) mpSeekTo(e); });
+document.addEventListener('touchmove',  e => { if(mpDragging) mpSeekTo(e); }, { passive: true });
+document.addEventListener('mouseup',   () => { mpDragging = false; });
+document.addEventListener('touchend',  () => { mpDragging = false; });
+
+/* Initial load */
+mpLoadSong(mpCurrentIdx, false);
 
 function tryAutoplay(){
   bgAudio.play().catch(()=>{
-    const unlockAudio=()=>{
-      bgAudio.play().catch(()=>{});
-      document.removeEventListener('click',unlockAudio);
-      document.removeEventListener('touchstart',unlockAudio);
-    };
-    document.addEventListener('click',unlockAudio,{once:true});
-    document.addEventListener('touchstart',unlockAudio,{once:true});
+    const unlock=()=>{bgAudio.play().catch(()=>{});document.removeEventListener('click',unlock);document.removeEventListener('touchstart',unlock);};
+    document.addEventListener('click',unlock,{once:true});
+    document.addEventListener('touchstart',unlock,{once:true});
   });
 }
 tryAutoplay();
@@ -560,45 +642,6 @@ tryAutoplay();
   applyPlatform();
 })();
 
-/* ══ MUSIC FLOAT BUTTON ══ */
-function toggleMusicFloat(){
-  const audio=$('bgAudio');
-  const playIcon=$('musicFloatPlay');
-  const pauseIcon=$('musicFloatPause');
-  const btn=$('musicFloat');
-  if(audio.paused){
-    audio.play().then(()=>{
-      playIcon.style.display='none';
-      pauseIcon.style.display='block';
-      btn.classList.add('playing');
-      if(typeof mpPlayBtn!=='undefined') mpPlayBtn.classList.add('playing');
-    }).catch(()=>{});
-  } else {
-    audio.pause();
-    playIcon.style.display='block';
-    pauseIcon.style.display='none';
-    btn.classList.remove('playing');
-    if(typeof mpPlayBtn!=='undefined') mpPlayBtn.classList.remove('playing');
-  }
-}
-
-// Sync float icon when audio plays/pauses from other controls
-document.addEventListener('DOMContentLoaded',()=>{
-  const audio=$('bgAudio');
-  if(!audio) return;
-  audio.addEventListener('play',()=>{
-    const p=$('musicFloatPlay'),pa=$('musicFloatPause'),b=$('musicFloat');
-    if(p){p.style.display='none';}
-    if(pa){pa.style.display='block';}
-    if(b){b.classList.add('playing');}
-  });
-  audio.addEventListener('pause',()=>{
-    const p=$('musicFloatPlay'),pa=$('musicFloatPause'),b=$('musicFloat');
-    if(p){p.style.display='block';}
-    if(pa){pa.style.display='none';}
-    if(b){b.classList.remove('playing');}
-  });
-});
 
 /* ══ END ══ */
 

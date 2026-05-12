@@ -95,7 +95,7 @@ body{
 .pp-cta:not(:disabled):hover .pp-cta-arrow{transform:translateX(5px)}
 
 /* ─── MAIN APP ─── */
-#app{min-height:100dvh;display:flex;flex-direction:column;max-width:500px;margin:0 auto;padding:0 16px 100px}
+#app{min-height:100dvh;display:flex;flex-direction:column;max-width:500px;margin:0 auto;padding:0 16px 130px}
 
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 0 18px;border-bottom:var(--ink-border);margin-bottom:16px}
 .header-brand{display:flex;align-items:center;gap:12px}
@@ -211,10 +211,120 @@ body{
 @keyframes spPop{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
 .sp-track{animation:spPop .3s ease backwards}
 
-#musicFloat{position:fixed;bottom:74px;right:16px;z-index:5001;width:50px;height:50px;background:linear-gradient(135deg,#ff3860,#ff8c00);border:var(--ink-border-heavy);display:flex;align-items:center;justify-content:center;box-shadow:4px 4px 0 var(--ink),0 4px 20px rgba(255,56,96,.4);cursor:pointer;animation:pulse 2.5s ease-in-out infinite;border-radius:8px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));transition:transform .15s ease}
-#musicFloat:active{transform:scale(.93)}
-#musicFloat.playing{animation:none;box-shadow:4px 4px 0 var(--ink),0 4px 24px rgba(255,140,0,.6)}
-#musicFloat svg{width:22px;height:22px;fill:#fff}
+/* ─── MUSIC PLAYER BAR ─── */
+@keyframes mpBarIn{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes mpWave{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes mpThumbPop{0%{transform:translateX(-50%) scale(0)}100%{transform:translateX(-50%) scale(1)}}
+
+.mp-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:5001;
+  background:rgba(13,13,13,.92);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-top:var(--ink-border-heavy);
+  border-top-color:rgba(255,56,96,.4);
+  box-shadow:0 -4px 0 var(--ink),0 -8px 40px rgba(0,0,0,.8),0 -2px 20px rgba(255,56,96,.15);
+  padding:10px 16px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  animation:mpBarIn .5s cubic-bezier(.22,1,.36,1) forwards;
+}
+.mp-bar::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),var(--yellow),var(--accent2),var(--accent),transparent);
+  background-size:200% 100%;animation:bgShift 3s ease infinite;
+}
+
+/* waveform visualizer */
+.mp-waveform{
+  position:absolute;top:-18px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:flex-end;gap:2px;height:18px;
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.mp-bar.playing .mp-waveform{opacity:1;}
+.mp-waveform span{
+  width:3px;border-radius:2px 2px 0 0;
+  background:linear-gradient(to top,var(--accent),var(--accent2));
+  min-height:3px;
+  animation:mpWave 0.8s ease-in-out infinite;
+  animation-play-state:paused;
+}
+.mp-bar.playing .mp-waveform span{animation-play-state:running;}
+.mp-waveform span:nth-child(1){height:40%;animation-delay:0s}
+.mp-waveform span:nth-child(2){height:70%;animation-delay:.07s}
+.mp-waveform span:nth-child(3){height:55%;animation-delay:.14s}
+.mp-waveform span:nth-child(4){height:90%;animation-delay:.21s}
+.mp-waveform span:nth-child(5){height:65%;animation-delay:.28s}
+.mp-waveform span:nth-child(6){height:100%;animation-delay:.35s}
+.mp-waveform span:nth-child(7){height:75%;animation-delay:.28s}
+.mp-waveform span:nth-child(8){height:85%;animation-delay:.21s}
+.mp-waveform span:nth-child(9){height:50%;animation-delay:.14s}
+.mp-waveform span:nth-child(10){height:80%;animation-delay:.07s}
+.mp-waveform span:nth-child(11){height:45%;animation-delay:.04s}
+.mp-waveform span:nth-child(12){height:60%;animation-delay:0s}
+
+/* controls row */
+.mp-controls{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.mp-btn{
+  background:none;border:none;cursor:pointer;
+  color:var(--muted2);transition:color .2s,transform .15s;
+  display:flex;align-items:center;justify-content:center;
+  padding:4px;border-radius:4px;
+  -webkit-tap-highlight-color:transparent;
+}
+.mp-btn:hover{color:var(--text);}
+.mp-btn:active{transform:scale(.88);}
+.mp-btn svg{width:20px;height:20px;display:block;}
+
+.mp-play{
+  width:40px;height:40px;border-radius:8px!important;
+  background:linear-gradient(135deg,var(--accent),var(--accent2))!important;
+  color:#fff!important;
+  border:var(--ink-border)!important;
+  box-shadow:3px 3px 0 var(--ink);
+  transition:transform .15s,box-shadow .15s,color .2s!important;
+  clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));
+}
+.mp-play:hover{transform:translate(-2px,-2px)!important;box-shadow:5px 5px 0 var(--ink)!important;}
+.mp-play:active{transform:scale(.9)!important;box-shadow:1px 1px 0 var(--ink)!important;}
+.mp-play svg{width:18px;height:18px;}
+.mp-prev svg,.mp-next svg{width:22px;height:22px;}
+.mp-prev{color:var(--muted);}
+.mp-next{color:var(--muted);}
+.mp-prev:hover,.mp-next:hover{color:var(--accent);}
+
+/* progress row */
+.mp-progress-area{
+  display:flex;align-items:center;gap:8px;
+}
+.mp-time{
+  font-family:var(--font-head);font-size:.7rem;
+  color:var(--muted);letter-spacing:.04em;
+  min-width:30px;flex-shrink:0;
+}
+#mpDuration{text-align:right;}
+.mp-track{
+  flex:1;height:4px;background:rgba(255,255,255,.1);
+  border-radius:2px;position:relative;cursor:pointer;
+  transition:height .2s;
+}
+.mp-track:hover{height:6px;}
+.mp-track:hover .mp-thumb{opacity:1;}
+.mp-fill{
+  height:100%;border-radius:2px;width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .1s linear;pointer-events:none;
+}
+.mp-thumb{
+  position:absolute;top:50%;left:0%;
+  transform:translateX(-50%) translateY(-50%);
+  width:12px;height:12px;border-radius:50%;
+  background:#fff;border:2px solid var(--accent);
+  box-shadow:0 0 6px rgba(255,56,96,.6);
+  opacity:0;transition:opacity .2s,left .1s linear;
+  pointer-events:none;
+}
 
 .app-footer{margin-top:auto;padding-top:24px;text-align:center;font-size:.68rem;color:var(--muted);border-top:var(--ink-border);font-family:var(--font-head);letter-spacing:.05em}
 

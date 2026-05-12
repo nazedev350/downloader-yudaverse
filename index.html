@@ -227,11 +227,34 @@
 
 <audio id="bgAudio" loop preload="none"></audio>
 
-<!-- MUSIC FLOAT BUTTON -->
-<button id="musicFloat" title="Play / Pause Musik" onclick="toggleMusicFloat()">
-  <svg id="musicFloatPlay" viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20"/></svg>
-  <svg id="musicFloatPause" viewBox="0 0 24 24" style="display:none"><rect x="5" y="4" width="4" height="16" rx="1"/><rect x="15" y="4" width="4" height="16" rx="1"/></svg>
-</button>
+<!-- MUSIC PLAYER BAR -->
+<div id="musicPlayer" class="mp-bar">
+  <div class="mp-waveform" id="mpWaveform">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span>
+  </div>
+  <div class="mp-controls">
+    <button class="mp-btn mp-prev" id="mpPrevBtn" title="Lagu Sebelumnya">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+    </button>
+    <button class="mp-btn mp-play" id="mpPlayBtn" title="Play / Pause">
+      <svg class="mp-ico-play" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+      <svg class="mp-ico-pause" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/></svg>
+    </button>
+    <button class="mp-btn mp-next" id="mpNextBtn" title="Lagu Berikutnya">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+    </button>
+  </div>
+  <div class="mp-progress-area">
+    <span class="mp-time" id="mpCurrent">0:00</span>
+    <div class="mp-track" id="mpTrack">
+      <div class="mp-fill" id="mpFill"></div>
+      <div class="mp-thumb" id="mpThumb"></div>
+    </div>
+    <span class="mp-time" id="mpDuration">0:00</span>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
