@@ -513,7 +513,8 @@ const songList=[
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/trorp8il.mp3',
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/ito4m9wq.mp3',
   'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/etyvlxnk.mp3',
-  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/vph1npic.mp3'
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/vph1npic.mp3',
+  'https://raw.githubusercontent.com/nazedev350/cdn-yudaverse/main/8piil2dh.mp3'
 ];
 bgAudio.src = songList[Math.floor(Math.random()*songList.length)];
 
