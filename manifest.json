@@ -1,0 +1,26 @@
+{
+  "name": "YudaVerse Downloader",
+  "short_name": "YudaVerse",
+  "description": "Universal Downloader — Facebook, TikTok, Instagram, Spotify, dan lebih banyak lagi!",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#ff3860",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "entertainment"],
+  "lang": "id"
+}
